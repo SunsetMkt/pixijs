@@ -58,7 +58,7 @@ export class BasisParser
     private static workerPool: TranscoderWorker[] = [];
 
     /**
-     * Runs transcoding and populates {@link imageArray}. It will run the transcoding in a web worker
+     * Runs transcoding and populates imageArray. It will run the transcoding in a web worker
      * if they are available.
      * @private
      */
@@ -316,6 +316,7 @@ export class BasisParser
                 pvrtc: gl.getExtension('WEBGL_compressed_texture_pvrtc')
                     || gl.getExtension('WEBKIT_WEBGL_compressed_texture_pvrtc'),
                 atc: gl.getExtension('WEBGL_compressed_texture_atc'),
+                bptc: gl.getExtension('EXT_texture_compression_bptc'),
             };
         }
 

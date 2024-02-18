@@ -1,4 +1,4 @@
-import { extensions, ExtensionType, settings } from '@pixi/core';
+import { extensions, ExtensionType, settings, utils } from '@pixi/core';
 
 import type { ResolveURLParser, UnresolvedAsset } from '@pixi/assets';
 
@@ -6,15 +6,13 @@ export const resolveCompressedTextureUrl = {
     extension: ExtensionType.ResolveParser,
     test: (value: string) =>
     {
-        const temp = value.split('?')[0];
-        const extension = temp.split('.').pop();
+        const extension = utils.path.extname(value).slice(1);
 
         return ['basis', 'ktx', 'dds'].includes(extension);
     },
     parse: (value: string): UnresolvedAsset =>
     {
-        const temp = value.split('?')[0];
-        const extension = temp.split('.').pop();
+        const extension = utils.path.extname(value).slice(1);
 
         if (extension === 'ktx')
         {
@@ -25,7 +23,8 @@ export const resolveCompressedTextureUrl = {
                 '.etc1.ktx',
                 '.pvrt.ktx',
                 '.atc.ktx',
-                '.astc.ktx'
+                '.astc.ktx',
+                '.bptc.ktx'
             ];
 
             // check if value ends with one of the extensions
@@ -41,7 +40,7 @@ export const resolveCompressedTextureUrl = {
 
         return {
             resolution: parseFloat(settings.RETINA_PREFIX.exec(value)?.[1] ?? '1'),
-            format: value.split('.').pop(),
+            format: extension,
             src: value,
         };
     },

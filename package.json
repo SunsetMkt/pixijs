@@ -1,7 +1,7 @@
 {
   "name": "pixi.js-monorepo",
   "private": true,
-  "version": "7.3.1",
+  "version": "7.4.0",
   "workspaces": [
     "bundles/*",
     "packages/*",
@@ -24,13 +24,14 @@
     "lintfix": "run-s \"lint -- --fix\"",
     "types": "tsc --noEmit",
     "types:strict": "npm run types -- --strictNullChecks | ts-node ./scripts/filterTypeScriptErrors.ts",
+    "types:worker": "tsc -p tsconfig.worker.json --noEmit",
     "prebuild": "run-s clean:build",
     "build": "rollup -c --failAfterWarnings",
     "prebuild:types": "run-s clean:types clean:out",
     "build:types": "tsc -p tsconfig.types.json && ts-node scripts/fixTypes.ts",
     "postbuild:types": "copyfiles -u 1 \"out/**/*\" . && run-s clean:out",
     "watch": "rollup -cw",
-    "dist": "run-s lint types types:strict build build:types docs",
+    "dist": "run-s lint types types:strict types:worker build build:types docs",
     "postdist": "copyfiles -f bundles/*/dist/* dist && copyfiles -f packages/*/dist/* dist/packages",
     "codesandbox-ci": "run-s build build:types prepublish-ci",
     "prerelease": "run-s clean:build test dist",
@@ -48,8 +49,9 @@
     "npm": ">=8"
   },
   "devDependencies": {
-    "@pixi/eslint-config": "^4.0.1",
+    "@pixi/eslint-config": "^5.1.0",
     "@pixi/webdoc-template": "^1.5.5",
+    "@pixi/webworker-plugins": "^0.3.0",
     "@rollup/plugin-alias": "^5.0.0",
     "@rollup/plugin-commonjs": "^25.0.0",
     "@rollup/plugin-json": "^6.0.0",
@@ -61,10 +63,8 @@
     "cross-env": "^5.2.0",
     "electron": "^12.0.0",
     "esbuild": "^0.18.11",
-    "eslint": "^8.25.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jsdoc": "^39.2.9",
-    "eslint-plugin-simple-import-sort": "^8.0.0",
+    "eslint": "^8.56.0",
+    "eslint-plugin-jsdoc": "^46.9.1",
     "glob": "^7.1.3",
     "http-server": "^14.1.1",
     "inquirer": "^8.0.0",
@@ -83,7 +83,7 @@
     "ts-jest": "^26.0.0",
     "ts-node": "^9.0.0",
     "tsconfig-paths": "^3.10.1",
-    "typescript": "~4.3.0",
+    "typescript": "^5.0.0",
     "workspaces-run": "^1.0.2",
     "yargs-parser": "^21.0.1"
   }

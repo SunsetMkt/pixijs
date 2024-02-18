@@ -53,7 +53,7 @@ export interface ISpritesheetData
             name: string;
             opacity: number;
         }[];
-        scale: string;
+        scale: string | number;
         size?: {
             h: number;
             w: number;
@@ -75,6 +75,26 @@ export interface ISpritesheetData
         related_multi_packs?: string[];
         version?: string;
     };
+}
+
+/**
+ * Options for loading a spritesheet from an atlas.
+ * @memberof PIXI
+ */
+interface SpritesheetOptions<S extends ISpritesheetData = ISpritesheetData>
+{
+    /** Reference to Texture */
+    texture: BaseTexture | Texture;
+    /** JSON data for the atlas. */
+    data: S;
+    /** The filename to consider when determining the resolution of the spritesheet. */
+    resolutionFilename?: string;
+    /**
+     * Prefix to add to texture names when adding to global TextureCache,
+     * using this option can be helpful if you have multiple texture atlases
+     * that share texture names and you need to disambiguate them.
+     */
+    cachePrefix?: string;
 }
 
 /**
@@ -146,6 +166,33 @@ export interface ISpritesheetData
  * Default anchor points (see {@link PIXI.Texture#defaultAnchor}), default 9-slice borders
  * (see {@link PIXI.Texture#defaultBorders}) and grouping of animation sprites are currently only
  * supported by TexturePacker.
+ *
+ * Alternative ways for loading spritesheet image if you need more control:
+ *
+ * ```js
+ * import { Assets } from 'pixi.js';
+ *
+ * const sheetTexture = await Assets.load('images/spritesheet.png');
+ * Assets.add({
+ *     alias: 'atlas',
+ *     src: 'images/spritesheet.json'
+ *     data: {texture: sheetTexture} // using of preloaded texture
+ * });
+ * const sheet = await Assets.load('atlas')
+ * ```
+ *
+ * or:
+ *
+ * ```js
+ * import { Assets } from 'pixi.js';
+ *
+ * Assets.add({
+ *     alias: 'atlas',
+ *     src: 'images/spritesheet.json'
+ *     data: {imageFilename: 'my-spritesheet.2x.avif'} // using of custom filename located in "images/my-spritesheet.2x.avif"
+ * });
+ * const sheet = await Assets.load('atlas')
+ * ```
  * @memberof PIXI
  */
 export class Spritesheet<S extends ISpritesheetData = ISpritesheetData>
@@ -177,7 +224,7 @@ export class Spritesheet<S extends ISpritesheetData = ISpritesheetData>
      *
      * new AnimatedSprite(sheet.animations['anim_name']);
      */
-    public animations: Record<keyof S['animations'], Texture[]>;
+    public animations: Record<keyof NonNullable<S['animations']>, Texture[]>;
 
     /**
      * Reference to the original JSON data.
@@ -212,19 +259,39 @@ export class Spritesheet<S extends ISpritesheetData = ISpritesheetData>
      */
     private _callback: (textures: utils.Dict<Texture>) => void;
 
+    /** Prefix string to add to global cache */
+    public readonly cachePrefix: string;
+
     /**
+     * @class
+     * @param options - Options to use when constructing a new Spritesheet.
+     */
+    constructor(options: SpritesheetOptions<S>);
+
+    /**
+     * @class
      * @param texture - Reference to the source BaseTexture object.
      * @param {object} data - Spritesheet image data.
      * @param resolutionFilename - The filename to consider when determining
      *        the resolution of the spritesheet. If not provided, the imageUrl will
      *        be used on the BaseTexture.
      */
-    constructor(texture: BaseTexture | Texture, data: S, resolutionFilename: string = null)
+    constructor(texture: BaseTexture | Texture, data: S, resolutionFilename?: string);
+
+    /** @ignore */
+    constructor(optionsOrTexture: SpritesheetOptions<S> | BaseTexture | Texture, arg1?: S, arg2?: string)
     {
+        if (optionsOrTexture instanceof BaseTexture || optionsOrTexture instanceof Texture)
+        {
+            optionsOrTexture = { texture: optionsOrTexture, data: arg1, resolutionFilename: arg2 };
+        }
+        const { texture, data, resolutionFilename = null, cachePrefix = '' } = optionsOrTexture;
+
+        this.cachePrefix = cachePrefix;
         this._texture = texture instanceof Texture ? texture : null;
         this.baseTexture = texture instanceof BaseTexture ? texture : this._texture.baseTexture;
         this.textures = {} as Record<keyof S['frames'], Texture>;
-        this.animations = {} as Record<keyof S['animations'], Texture[]>;
+        this.animations = {} as Record<keyof NonNullable<S['animations']>, Texture[]>;
         this.data = data;
 
         const resource = this.baseTexture.resource as ImageResource;
@@ -254,7 +321,7 @@ export class Spritesheet<S extends ISpritesheetData = ISpritesheetData>
         if (resolution === null)
         {
             // Use the scale value or default to 1
-            resolution = parseFloat(scale ?? '1');
+            resolution = typeof scale === 'number' ? scale : parseFloat(scale ?? '1');
         }
 
         // For non-1 resolutions, update baseTexture
@@ -361,7 +428,7 @@ export class Spritesheet<S extends ISpritesheetData = ISpritesheetData>
                 );
 
                 // lets also add the frame to pixi's global cache for 'from' and 'fromLoader' functions
-                Texture.addToCache(this.textures[i], i.toString());
+                Texture.addToCache(this.textures[i], this.cachePrefix + i.toString());
             }
 
             frameIndex++;

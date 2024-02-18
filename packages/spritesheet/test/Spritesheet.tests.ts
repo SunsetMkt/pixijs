@@ -94,6 +94,23 @@ describe('Spritesheet', () =>
         spritesheet.destroy(true);
     });
 
+    it('should create an instance with options', () =>
+    {
+        const baseTexture = new BaseTexture();
+        const data = {
+            frames: {},
+            meta: {},
+        } as unknown as ISpritesheetData;
+
+        const spritesheet = new Spritesheet({ texture: baseTexture, data });
+
+        expect(spritesheet.data).toEqual(data);
+        expect(spritesheet.baseTexture).toEqual(baseTexture);
+        expect(spritesheet.resolution).toEqual(1);
+
+        spritesheet.destroy(true);
+    });
+
     it('should create instance with scale resolution', (done) =>
     {
         jest.setTimeout(10000);
@@ -228,6 +245,32 @@ describe('Spritesheet', () =>
             expect(texture.width).toEqual(120);
             expect(texture.height).toEqual(100);
             done();
+        });
+    });
+
+    it('should parse scale correctly', () =>
+    {
+        [
+            {
+                frames: {},
+                meta: { scale: '1' } // scale can be a string
+            },
+            {
+                frames: {},
+                meta: { scale: 1 } // scale can be a number
+            },
+            {
+                frames: {},
+                meta: {} // if scale not set, default to 1
+            } as unknown as ISpritesheetData,
+        ].forEach((toTest) =>
+        {
+            const baseTexture = new BaseTexture();
+            const spritesheet = new Spritesheet(baseTexture, toTest);
+
+            expect(spritesheet.resolution).toEqual(1);
+
+            spritesheet.destroy(true);
         });
     });
 });
